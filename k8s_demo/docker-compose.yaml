@@ -1,0 +1,9 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0  # 使用 MySQL 8.0 镜像
+    ports:
+      - "3307:3306"  # 将宿主机的 3306 端口映射到容器的 3306 端口
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456 # 设置 root 用户的密码
+

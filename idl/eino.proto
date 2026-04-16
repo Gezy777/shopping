@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package eino;
+
+option go_package = "/eino";
+
+message EinoReq{
+  string einoask = 1;
+}
+
+message EinoResp {
+  string einoanswer = 1;
+}
+
+service EinoService{
+  rpc Eino(EinoReq) returns (EinoResp);
+}

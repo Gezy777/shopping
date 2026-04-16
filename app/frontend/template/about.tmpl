@@ -1,0 +1,15 @@
+{{define "about"}}
+{{template "header" .}}
+  <div>
+    <img src="/static/image/logo.jpg" alt="CloudWeGo" class="col-lg-2 col-md-3 col-sm-4"/>
+    <p>This is community a diver project!</p>
+  </div>
+
+  <form action="/eino" method="POST">
+    <input type="text" name="ask" placeholder="输入内容">
+    <button type="submit">提交</button>
+  </form>
+
+
+{{template "footer" .}}
+{{end}}

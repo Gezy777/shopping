@@ -1,0 +1,8 @@
+{
+    "makefile.configurations": [
+        {
+            "makePath": "/usr/bin/make",
+            "name": "Unnamed configuration 1"
+        }
+    ]
+}
