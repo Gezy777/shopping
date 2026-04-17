@@ -108,16 +108,16 @@ func (s *CheckoutService) Run(req *checkout.CheckoutReq) (resp *checkout.Checkou
 		},
 	}
 
-	_, err = rpc.CartClient.EmptyCart(s.ctx, &cart.EmptyCartReq{UserId: req.UserId})
-
-	if err != nil {
-		klog.Error(err.Error())
-	}
-
 	paymentResult, err := rpc.PaymentClient.Charge(s.ctx, payReq)
 
 	if err != nil {
 		return nil, err
+	}
+
+	_, err = rpc.CartClient.EmptyCart(s.ctx, &cart.EmptyCartReq{UserId: req.UserId})
+
+	if err != nil {
+		klog.Error(err.Error())
 	}
 
 	data, _ := proto.Marshal(&email.EmailReq{
