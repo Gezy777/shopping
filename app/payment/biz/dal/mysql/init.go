@@ -17,7 +17,23 @@ var (
 )
 
 func Init() {
-	dsn := fmt.Sprintf(conf.GetConf().MySQL.DSN, os.Getenv("MYSQL_USERNAME"), os.Getenv("MYSQL_PASSWORD"), os.Getenv("MYSQL_IPADDRESS"), os.Getenv("MYSQL_DATABASE"))
+	mysqlHost := os.Getenv("MYSQL_IPADDRESS")
+	if mysqlHost == "" {
+		mysqlHost = "localhost"
+	}
+	username := os.Getenv("MYSQL_USERNAME")
+	if username == "" {
+		username = "gomall"
+	}
+	password := os.Getenv("MYSQL_PASSWORD")
+	if password == "" {
+		password = "gomall123"
+	}
+	database := os.Getenv("MYSQL_DATABASE")
+	if database == "" {
+		database = "gomall"
+	}
+	dsn := fmt.Sprintf(conf.GetConf().MySQL.DSN, username, password, mysqlHost, database)
 	DB, err = gorm.Open(mysql.Open(dsn),
 		&gorm.Config{
 			PrepareStmt:            true,

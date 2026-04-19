@@ -1,0 +1,234 @@
+services:
+  # ==================== 基础设施 ====================
+  consul:
+    image: consul:1.15
+    container_name: consul
+    ports:
+      - "8500:8500"
+    command: agent -server -ui -bootstrap-expect=1 -client=0.0.0.0
+    networks:
+      - gomall
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: gomall
+      MYSQL_USER: gomall
+      MYSQL_PASSWORD: gomall123
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - gomall
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    # ports:
+    #   - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gomall
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10-alpine
+    container_name: nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    networks:
+      - gomall
+
+  # ==================== 微服务 (使用预构建镜像) ====================
+  frontend:
+    image: gomall/frontend:latest
+    container_name: frontend
+    ports:
+      - "8888:8888"
+    depends_on:
+      consul:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SESSION_SECRET=cloudwego-session-secret-key-2024
+
+  product:
+    image: gomall/product:latest
+    container_name: product
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      consul:
+        condition: service_started
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - MYSQL_IPADDRESS=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USERNAME=gomall
+      - MYSQL_PASSWORD=gomall123
+      - MYSQL_DATABASE=gomall
+
+  cart:
+    image: gomall/cart:latest
+    container_name: cart
+    ports:
+      - "8081:8081"
+    depends_on:
+      redis:
+        condition: service_started
+      consul:
+        condition: service_started
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - MYSQL_IPADDRESS=mysql
+      - MYSQL_USERNAME=gomall
+      - MYSQL_PASSWORD=gomall123
+      - MYSQL_DATABASE=gomall
+
+  order:
+    image: gomall/order:latest
+    container_name: order
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      consul:
+        condition: service_started
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - MYSQL_IPADDRESS=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=gomall
+      - MYSQL_PASSWORD=gomall123
+      - MYSQL_DATABASE=gomall
+
+  checkout:
+    image: gomall/checkout:latest
+    container_name: checkout
+    ports:
+      - "8083:8083"
+    depends_on:
+      consul:
+        condition: service_started
+      nats:
+        condition: service_started
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - NATS_HOST=nats
+      - NATS_PORT=4222
+
+  payment:
+    image: gomall/payment:latest
+    container_name: payment
+    ports:
+      - "8084:8084"
+    depends_on:
+      consul:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - MYSQL_IPADDRESS=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USERNAME=gomall
+      - MYSQL_PASSWORD=gomall123
+      - MYSQL_DATABASE=gomall
+
+  email:
+    image: gomall/email:latest
+    container_name: email
+    ports:
+      - "8085:8085"
+    depends_on:
+      consul:
+        condition: service_started
+      nats:
+        condition: service_started
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - NATS_HOST=nats
+      - NATS_PORT=4222
+
+  user:
+    image: gomall/user:latest
+    container_name: user
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      consul:
+        condition: service_started
+      redis:
+        condition: service_started
+    networks:
+      - gomall
+    environment:
+      - GO_ENV=dev
+      - CONSUL_HOST=consul
+      - CONSUL_PORT=8500
+      - MYSQL_IPADDRESS=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USERNAME=gomall
+      - MYSQL_PASSWORD=gomall123
+      - MYSQL_DATABASE=gomall
+
+networks:
+  gomall:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:

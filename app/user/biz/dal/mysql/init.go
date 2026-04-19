@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	//"github.com/cloudwego/biz-demo/gomall/app/user/conf"
 	"github.com/cloudwego/biz-demo/gomall/app/user/model"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -17,12 +15,28 @@ var (
 )
 
 func Init() {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local"/*conf.GetConf().MySQL.DSN*/,
-	os.Getenv("MYSQL_USERNAME"),
-	os.Getenv("MYSQL_PASSWORD"),
-	os.Getenv("MYSQL_IPADDRESS"),
-	os.Getenv("MYSQL_DATABASE"),
-)
+	mysqlHost := os.Getenv("MYSQL_IPADDRESS")
+	if mysqlHost == "" {
+		mysqlHost = "localhost"
+	}
+	username := os.Getenv("MYSQL_USERNAME")
+	if username == "" {
+		username = "gomall"
+	}
+	password := os.Getenv("MYSQL_PASSWORD")
+	if password == "" {
+		password = "gomall123"
+	}
+	database := os.Getenv("MYSQL_DATABASE")
+	if database == "" {
+		database = "gomall"
+	}
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		username,
+		password,
+		mysqlHost,
+		database,
+	)
 
 	DB, err = gorm.Open(mysql.Open(dsn),
 		&gorm.Config{

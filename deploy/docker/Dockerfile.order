@@ -1,0 +1,29 @@
+# Build stage
+FROM golang:1.23-alpine AS builder
+
+WORKDIR /app
+
+RUN apk add --no-cache git
+
+ENV GOPROXY=https://goproxy.cn,direct
+ENV GO111MODULE=on
+
+COPY . .
+
+RUN mkdir -p /app/output/bin /app/output/conf     && cd app/order     && CGO_ENABLED=0 GOOS=linux go build -o /app/output/bin/order .     && cp -r script /app/output/     && cp -r conf /app/output/
+
+# Runtime stage
+FROM alpine:3.19
+
+WORKDIR /app
+
+RUN apk add --no-cache ca-certificates
+
+COPY --from=builder /app/output/bin/order /app/bin/order
+COPY --from=builder /app/output/script/bootstrap.sh /app/
+COPY --from=builder /app/output/conf /app/conf
+RUN chmod +x /app/bootstrap.sh
+
+EXPOSE 8080
+
+ENTRYPOINT ["/app/bootstrap.sh"]
