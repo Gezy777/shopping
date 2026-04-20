@@ -66,6 +66,9 @@ services:
         condition: service_started
     networks:
       - gomall
+    volumes:
+      - ../../app/frontend/template:/app/template
+      - ../../app/frontend/static:/app/static
     environment:
       - GO_ENV=dev
       - CONSUL_HOST=consul
